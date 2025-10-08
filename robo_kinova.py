@@ -29,24 +29,22 @@ def notification_callback(data):
     print("****************************")
 
 class vetorCartesiano:
-    def __init__(self, x=0.0, y=0.0, z=0.0, theta_x=0.0, theta_y=0.0, theta_z=0.0):
+    def __init__(self, x=0.0, y=0.0, z=0.0):
         self.x = x
         self.y = y
         self.z = z
-        self.theta_x = theta_x
-        self.theta_y = theta_y
-        self.theta_z = theta_z
     def soma(self, v):
-        return vetorCartesiano(self.x + v.x, self.y + v.y, self.z + v.z, self.theta_x + v.theta_x, self.theta_y + v.theta_y, self.theta_z + v.theta_z)
+        return vetorCartesiano(self.x + v.x, self.y + v.y, self.z + v.z)
     @property
     def norma(self):
-        return (self.x**2 + self.y**2 + self.z**2 + self.theta_x**2 + self.theta_y**2 + self.theta_z**2)**0.5
+        return (self.x**2 + self.y**2 + self.z**2)**0.5
     @property
     def versor(self):
         n = self.norma
         if n == 0:
-            return vetorCartesiano(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-        return vetorCartesiano(self.x/n, self.y/n, self.z/n, self.theta_x/n, self.theta_y/n, self.theta_z/n)
+            return vetorCartesiano(0.0, 0.0, 0.0)
+        return vetorCartesiano(self.x/n, self.y/n, self.z/n)
+
 class KinovaRobot:
     IP = '192.168.1.10'
     PORT = 10000
@@ -223,7 +221,7 @@ class KinovaRobot:
             error_print(ex)
             return False
         return True
-    def moveTo(self, posicao: vetorCartesiano, orientacao: vetorCartesiano):
+    def moveFrom(self, posicao: vetorCartesiano, orientacao: vetorCartesiano):
         if not self.is_connected or self.is_busy:
             return False
         if not self.set_servoing_mode(): 
@@ -249,6 +247,80 @@ class KinovaRobot:
             error_print(ex)
             return False
         return True
+    def moveTo(self, posicao: vetorCartesiano, orientacao: vetorCartesiano):
+        if not self.is_connected or self.is_busy:
+            return False
+        if not self.set_servoing_mode(): 
+            return False
+        try:
+            feedback = self.base_cyclic.RefreshFeedback()  
+            
+            cartesian_pose = self.action.reach_pose.target_pose
+            
+            cartesian_pose.x = posicao.x        # (meters)
+            cartesian_pose.y = posicao.y   # (meters)
+            cartesian_pose.z = posicao.z    # (meters)
+            cartesian_pose.theta_x = orientacao.x # (degrees)
+            cartesian_pose.theta_y = orientacao.y # (degrees)
+            cartesian_pose.theta_z = orientacao.z # (degrees)
+
+            print("Executando movimento cartesiano...")
+            self.base.ExecuteAction(self.action)
+            time.sleep(0.5)  # Pequeno atraso para garantir que a ação come
+            while self.is_busy:
+                time.sleep(1)
+        except KException as ex:
+            error_print(ex)
+            return False
+        return True
+
+    def _send_gripper_position(self, value: float = 1.0, finger_ids=(1,), hold_time: float = 0.8) -> bool:
+        """
+        Envia um comando de posição para a garra.
+        value: 0.0 (aberta) ... 1.0 (fechada)
+        finger_ids: tupla/lista com os IDs dos dedos existentes (1,2,3...) - ajuste se sua garra tiver + de 1 dedo
+        hold_time: pequeno tempo para permitir o movimento mecânico (segundos)
+        """
+        if not self.is_connected:
+            print("Não conectado ao robô.")
+            return False
+
+        # Sanitiza faixa [0,1]
+        v = max(0.0, min(1.0, float(value)))
+
+        try:
+            cmd = Base_pb2.GripperCommand()
+            cmd.mode = Base_pb2.GRIPPER_POSITION
+            for fid in finger_ids:
+                f = cmd.gripper.finger.add()
+                f.finger_identifier = int(fid)
+                f.value = v  # 0.0 aberto, 1.0 fechado
+
+            self.base.SendGripperCommand(cmd)
+
+            # Pequena espera para o atuador completar o movimento (não há callback de ação para garra)
+            time.sleep(max(0.0, float(hold_time)))
+            return True
+        except KException as ex:
+            error_print(ex)
+            return False
+        except Exception as ex:
+            print(f"Erro inesperado ao mover a garra: {ex}")
+            return False
+
+    def open_gripper(self, value: float = 0.0, hold_time: float = 0.7, finger_ids=(1,)) -> bool:
+        """
+        Abre a garra. Por padrão abre totalmente (value=0.0).
+        Ajuste 'value' se quiser abertura parcial, e 'finger_ids' se houver múltiplos dedos.
+        """
+        return self._send_gripper_position(value=value, finger_ids=finger_ids, hold_time=hold_time)
+
+    def close_gripper(self, value: float = 0.8, hold_time: float = 1.0, finger_ids=(1,)) -> bool:
+        """
+        Fecha a garra. Por padrão fecha totalmente (value=1.0).
+        Ajuste 'value' se quiser fechamento parcial, e 'finger_ids' se houver múltiplos dedos.
+        """
+        return self._send_gripper_position(value=value, finger_ids=finger_ids, hold_time=hold_time)
 
 
 
