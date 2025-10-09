@@ -249,7 +249,7 @@ class KinovaRobot:
             return False
         return True
     
-    ###EXECUTA UM MOVIMENTO PARA AS COORDENADAS PASSADAS
+     ###EXECUTA UM MOVIMENTO PARA AS COORDENADAS PASSADAS
 
     def moveTo(self, posicao: vetorCartesiano, orientacao: vetorCartesiano):
         if not self.is_connected or self.is_busy:
@@ -277,7 +277,56 @@ class KinovaRobot:
             error_print(ex)
             return False
         return True
+     ###EXECUTA UM MOVIMENTO PARA ASSUMIR ANGULOS DE JUNTAS PREDEFINIDOS
+    def moveTo_joint_angles(self,angulos: list[float]):
+        if not self.is_connected or self.is_busy:
+            return False
+        if not self.set_servoing_mode(): 
+            return False
+        if len(angulos) != self.number_of_joints:
+            print("Quantidade errada de angulos passados")
+            return False
+        try: 
+           acao_angulos = self.action.reach_joint_angles 
+           for i in range(self.number_of_joints):
+               j = acao_angulos.joint_angles.joint_angles.add()
+               j.joint_identifier = i 
+               j.value = angulos[i]
+
+               self.base.ExecuteAction(self.action)  
+               time.sleep(0.5)
+               while self.is_busy:
+                   time.sleep(0.5)          
+        except KException as ex: 
+            error_print(ex)
+            return False
+        return True
     
+    ###EXECUTA MOVIMENTO DE VELOCIDADE DAS JUNTAS
+    def send_joint_speeds(self, velocidades: list[float], tempo: float):
+        if not self.is_connected or self.is_busy:
+            return False
+        if not self.set_servoing_mode(): 
+            return False
+        if not self.set_servoing_mode(): 
+            return False
+        if len(velocidades) != self.number_of_joints:
+            print("Quantidade errada de angulos passados")
+            return False
+        try:
+            acao_velocidade_juntas = self.action.send_joint_speeds
+            acao_angulos = self.action.reach_joint_angles 
+            for i in range(self.number_of_joints):
+               j = acao_velocidade_juntas.joint_speeds.add()
+               j.joint_identifier = i 
+               j.value = velocidades[i]
+
+               self.base.ExecuteAction(self.action)  
+               time.sleep(tempo)        
+        except KException as ex: 
+            error_print(ex)
+            return False
+        return True
     ###FUNCOES DE FECHAMENTO E ABERTURA DA GARRA
 
     def _send_gripper_position(self, value: float = 1.0, finger_ids=(1,), hold_time: float = 0.8) -> bool:
