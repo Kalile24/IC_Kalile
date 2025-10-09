@@ -119,10 +119,12 @@ class KinovaRobot:
         
         self.transport.disconnect()
         print("Desconectado do robô.")
-        return True
-        
         self.is_connected = False
         return True
+        
+
+    ###CALLBACK UTILIZADO PARA INSCRIÇÃO NAS NOTIFICAÇÕES
+    ###ALTERA O is_busy PARA COMUNICAR SE O ROBÔ ESTÁ SENDO UTILIZADO
     
     def action_notification_callback(self, data):
         if data.action_event == Base_pb2.ActionEvent.ACTION_START:
@@ -137,7 +139,7 @@ class KinovaRobot:
         elif data.action_event == Base_pb2.ActionEvent.ACTION_PAUSE:
             print("Ação pausada")
             self.is_busy = False 
-    
+    """INSCRIÇÃO NAS NOTIFICACOES DE ACAO E MUDANCAS DE CONFIGURACAO"""
     def subscribe_to_notifications(self):
         if not self.is_connected:
             print("Não conectado ao robô.")
@@ -152,7 +154,7 @@ class KinovaRobot:
             print("Error occured: {}".format(k_ex))
         except Exception:
             print("Error occured")
-       
+    ###DESINSCRIAÇÃO DAS NOTIFICACOES 
     def unsubscribe_from_notifications(self):
         if not self.is_connected:
             print("Não há inscrição ativa para cancelar.")
@@ -166,7 +168,7 @@ class KinovaRobot:
             print(f"Ocorreu um erro KException ao cancelar a inscrição: {k_ex}")
         except Exception as ex:
             print(f"Ocorreu um erro inesperado ao cancelar a inscrição: {ex}")
-
+    ###DEFINE O MODO DE FUNCIONAMENTO DO ROBO PARA SINGLE_LEVEL_SERVOING
     def set_servoing_mode(self):
 
         if not self.is_connected:
@@ -174,22 +176,18 @@ class KinovaRobot:
             return False
     
         try:
-            print("Definindo o modo de controle para SINGLE_LEVEL_SERVOING...")
             servoing_mode_info = Base_pb2.ServoingModeInformation()
             servoing_mode_info.servoing_mode = Base_pb2.SINGLE_LEVEL_SERVOING
             self.base.SetServoingMode(servoing_mode_info)
         
-            # Os exemplos oficiais frequentemente adicionam um pequeno sleep após
-            # mudanças de estado para garantir que o controlador do robô tenha tempo de processar.
             time.sleep(1.0)
-        
-            print("Modo de controle definido com sucesso.")
             return True
         except KException as ex:
             print(f"Falha ao definir o modo de controle. Erro: {ex}")
         return False
 
-    
+    ###EXECUTA UMA AÇÃO JÁ PREDEFINA SALVA NO ROBO A PATIR DO NOME DA AÇÃO E SEU TIPO
+
     def executa_acao_existente(self, action_name: str, action_type = Base_pb2.REACH_JOINT_ANGLES):
         if not self.is_connected or self.is_busy:
             return False
@@ -204,8 +202,8 @@ class KinovaRobot:
             action_list = self.base.ReadAllActions(req_action_type)
             for action in action_list.action_list:
                 if action.name == action_name:
-                    action_handle = action.handle  # Encontrou! Salva o handle.
-                    break  # Otimização: pode parar de procurar assim que encontrar.
+                    action_handle = action.handle 
+                    break  
 
             if action_handle is None:
                 print(f"Ação '{action_name}' não encontrada no robô.")
@@ -214,13 +212,16 @@ class KinovaRobot:
             print(f"Ação '{action_name}' encontrada. ")
 
             self.base.ExecuteActionFromReference(action_handle)
-            time.sleep(0.5)  # Pequeno atraso para garantir que a ação comece.
+            time.sleep(0.5)  
             while self.is_busy:
                 time.sleep(1)
         except KException as ex:
             error_print(ex)
             return False
         return True
+    
+    ###EXECUTA UM DESLOCAMENO NA DIRECAO DOS VETORES PASSADOS
+
     def moveFrom(self, posicao: vetorCartesiano, orientacao: vetorCartesiano):
         if not self.is_connected or self.is_busy:
             return False
@@ -240,13 +241,16 @@ class KinovaRobot:
 
             print("Executando movimento cartesiano...")
             self.base.ExecuteAction(self.action)
-            time.sleep(0.5)  # Pequeno atraso para garantir que a ação come
+            time.sleep(0.5)  
             while self.is_busy:
                 time.sleep(1)
         except KException as ex:
             error_print(ex)
             return False
         return True
+    
+    ###EXECUTA UM MOVIMENTO PARA AS COORDENADAS PASSADAS
+
     def moveTo(self, posicao: vetorCartesiano, orientacao: vetorCartesiano):
         if not self.is_connected or self.is_busy:
             return False
@@ -273,6 +277,8 @@ class KinovaRobot:
             error_print(ex)
             return False
         return True
+    
+    ###FUNCOES DE FECHAMENTO E ABERTURA DA GARRA
 
     def _send_gripper_position(self, value: float = 1.0, finger_ids=(1,), hold_time: float = 0.8) -> bool:
         """
