@@ -230,7 +230,7 @@ class KinovaRobot:
             return False
         try:
             feedback = self.base_cyclic.RefreshFeedback()  
-            
+            self.action.Clear()
             cartesian_pose = self.action.reach_pose.target_pose
             
             cartesian_pose.x = feedback.base.tool_pose_x  +posicao.x        # (meters)
@@ -259,7 +259,7 @@ class KinovaRobot:
             return False
         try:
             feedback = self.base_cyclic.RefreshFeedback()  
-            
+            self.action.Clear()
             cartesian_pose = self.action.reach_pose.target_pose
             
             cartesian_pose.x = posicao.x        # (meters)
@@ -288,6 +288,7 @@ class KinovaRobot:
             print("Quantidade errada de angulos passados")
             return False
         try: 
+           self.action.Clear()
            acao_angulos = self.action.reach_joint_angles 
            for i in range(self.number_of_joints):
                j = acao_angulos.joint_angles.joint_angles.add()
@@ -328,6 +329,31 @@ class KinovaRobot:
             error_print(ex)
             return False
         return True
+    
+    ###FUNCAO DE TWIST COMMAND (VELOCIDADE CARTESIANA)
+    def send_twist_command(self, v1: vetorCartesiano, v2: vetorCartesiano, tempo: float):
+        if not self.is_connected or self.is_busy:
+            return False
+        if not self.set_servoing_mode(): 
+            return False
+        try: 
+            twist = Base_pb2.TwistCommand()
+            twist.reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_TOOL
+            twist.twist.linear_x = v1.x
+            twist.twist.linear_y = v1.y
+            twist.twist.linear_z = v1.z
+
+            twist.twist.angular_x = v2.x
+            twist.twist.angular_y = v2.y
+            twist.twist.angular_z = v2.z
+
+            self.base.SendTwistCommand(twist)
+            time.sleep(tempo)
+            self.base.Stop()
+
+        except KException as ex:
+            error_print()
+            return False
     
     ###FUNCOES DE FECHAMENTO E ABERTURA DA GARRA
 
