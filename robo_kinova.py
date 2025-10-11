@@ -139,7 +139,8 @@ class KinovaRobot:
         elif data.action_event == Base_pb2.ActionEvent.ACTION_PAUSE:
             print("Ação pausada")
             self.is_busy = False 
-    """INSCRIÇÃO NAS NOTIFICACOES DE ACAO E MUDANCAS DE CONFIGURACAO"""
+    
+    ###INSCRIÇÃO NAS NOTIFICACOES DE ACAO E MUDANCAS DE CONFIGURACAO
     def subscribe_to_notifications(self):
         if not self.is_connected:
             print("Não conectado ao robô.")
@@ -308,25 +309,26 @@ class KinovaRobot:
             return False
         if not self.set_servoing_mode(): 
             return False
-        if not self.set_servoing_mode(): 
-            return False
         if len(velocidades) != self.number_of_joints:
             print("Quantidade errada de angulos passados")
             return False
         try:
-            acao_velocidade_juntas = self.action.send_joint_speeds
-            acao_angulos = self.action.reach_joint_angles 
+            
+            joint_speeds = Base_pb2.JointSpeeds()
+    
             for i in range(self.number_of_joints):
-               j = acao_velocidade_juntas.joint_speeds.add()
+               j = joint_speeds.joint_speeds.add()
                j.joint_identifier = i 
                j.value = velocidades[i]
-
-               self.base.ExecuteAction(self.action)  
-               time.sleep(tempo)        
+            
+            self.base.SendJointSpeedsCommand(joint_speeds)
+            time.sleep(tempo) 
+            self.base.Stop()       
         except KException as ex: 
             error_print(ex)
             return False
         return True
+    
     ###FUNCOES DE FECHAMENTO E ABERTURA DA GARRA
 
     def _send_gripper_position(self, value: float = 1.0, finger_ids=(1,), hold_time: float = 0.8) -> bool:
