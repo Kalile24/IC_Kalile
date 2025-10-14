@@ -3,6 +3,8 @@ import os
 import threading
 import time
 
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 from kortex_api.TCPTransport import TCPTransport
 from kortex_api.RouterClient import RouterClient
 from kortex_api.SessionManager import SessionManager
@@ -112,9 +114,9 @@ def example_send_joint_speeds(base):
 
 def main():
     
-    import modulo_conexao
+    import modulos.modulo_conexao
 
-    with modulo_conexao.Conexao.create_tcp_connection() as router:
+    with modulos.modulo_conexao.Conexao.create_tcp_connection() as router:
         device_config = DeviceConfigClient(router)
         base = BaseClient(router)
 

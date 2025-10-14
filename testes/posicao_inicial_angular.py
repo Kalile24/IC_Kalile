@@ -3,6 +3,9 @@ import os
 import threading
 import time
 
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 from kortex_api.TCPTransport import TCPTransport
 from kortex_api.RouterClient import RouterClient
 from kortex_api.SessionManager import SessionManager
