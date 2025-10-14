@@ -187,7 +187,7 @@ class KinovaRobot:
             print(f"Falha ao definir o modo de controle. Erro: {ex}")
         return False
 
-    ###EXECUTA UMA AÇÃO JÁ PREDEFINA SALVA NO ROBO A PATIR DO NOME DA AÇÃO E SEU TIPO
+    ###EXECUTA UMA AÇÃO JÁ PREDEFINIDA SALVA NO ROBO A PATIR DO NOME DA AÇÃO E SEU TIPO
 
     def executa_acao_existente(self, action_name: str, action_type = Base_pb2.REACH_JOINT_ANGLES):
         if not self.is_connected or self.is_busy:
