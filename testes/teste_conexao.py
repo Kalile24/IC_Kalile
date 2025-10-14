@@ -10,12 +10,14 @@ from kortex_api.autogen.client_stubs.BaseClientRpc import BaseClient
 
 from kortex_api.autogen.messages import DeviceConfig_pb2, Session_pb2, Base_pb2
 
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 def main():
     #Import o módulo de conexão
     
-    import modulo_conexao
+    import modulos.modulo_conexao
 
-    with modulo_conexao.Conexao.create_tcp_connection() as router:
+    with modulos.modulo_conexao.Conexao.create_tcp_connection() as router:
         
         device_config = DeviceConfigClient(router)
         base = BaseClient(router)
