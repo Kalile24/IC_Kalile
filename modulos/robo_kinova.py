@@ -222,61 +222,41 @@ class KinovaRobot:
             error_print(ex)
             return False
         return True
-    
-    ###EXECUTA UM DESLOCAMENO NA DIRECAO DOS VETORES PASSADOS
 
-    def moveFrom(self, posicao: vetorCartesiano, orientacao: vetorCartesiano, reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_TOOL):
-        if not self.is_connected or self.is_busy:
-            return False
-        if not self.set_servoing_mode(): 
-            return False
-        try:
-            feedback = self.base_cyclic.RefreshFeedback()  
-            waypoint_list = Base_pb2.WaypointList()
-            w = waypoint_list.waypoints.add()
-            w.name = "Posicao 1"
-            w.cartesian_waypoint.reference_frame = reference_frame
-            w.cartesian_waypoint.pose.x = posicao.x + feedback.base.tool_pose_x        # (meters)
-            w.cartesian_waypoint.pose.y = posicao.y + feedback.base.tool_pose_y
-            w.cartesian_waypoint.pose.z = posicao.z + feedback.base.tool_pose_z    # (meters)
-            w.cartesian_waypoint.pose.theta_x = orientacao.x + feedback.base.tool_pose_theta_x # (degrees)
-            w.cartesian_waypoint.pose.theta_y = orientacao.y + feedback.base.tool_pose_theta_y # (degrees)
-            w.cartesian_waypoint.pose.theta_z = orientacao.z + feedback.base.tool_pose_theta_z # (degrees)  
-
-            print("Executando movimento cartesiano...")
-            self.base.ExecuteWaypointTrajectory(waypoint_list)
-            time.sleep(0.5)  
-            while self.is_busy:
-                time.sleep(1)
-        except KException as ex:
-            error_print(ex)
-            return False
-        return True
-    
      ###EXECUTA UM MOVIMENTO PARA AS COORDENADAS PASSADAS
 
-    def moveTo(self, posicao: vetorCartesiano, orientacao: vetorCartesiano):
+    def moveTo(self, posicao: vetorCartesiano, orientacao: vetorCartesiano, reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_BASE):
         if not self.is_connected or self.is_busy:
             return False
         if not self.set_servoing_mode(): 
             return False
-        try:
-            feedback = self.base_cyclic.RefreshFeedback()  
-            self.action.Clear()
-            cartesian_pose = self.action.reach_pose.target_pose
-            
-            cartesian_pose.x = posicao.x        # (meters)
-            cartesian_pose.y = posicao.y   # (meters)
-            cartesian_pose.z = posicao.z    # (meters)
-            cartesian_pose.theta_x = orientacao.x # (degrees)
-            cartesian_pose.theta_y = orientacao.y # (degrees)
-            cartesian_pose.theta_z = orientacao.z # (degrees)
+        try: 
+            waypoint = Base_pb2.CartesianWaypoint()
+            waypoint.reference_frame = reference_frame
+            waypoint.pose.x = posicao.x        # (meters)
+            waypoint.pose.y = posicao.y   # (meters)
+            waypoint.pose.z = posicao.z    # (meters)
+            waypoint.pose.theta_x = orientacao.x # (degrees)
+            waypoint.pose.theta_y = orientacao.y # (degrees)
+            waypoint.pose.theta_z = orientacao.z # (degrees)
 
+            waypoint_list = Base_pb2.WaypointList()
+            waypoint_list.duration = 0.0
+            waypoint_list.use_optimal_blending = False
+            
+            w = waypoint_list.waypoints.add()
+            w.name = "MoveTo"
+            w.cartesian_waypoint.CopyFrom(waypoint)
+
+            report = self.base.ValidateWaypointList(waypoint_list)
+            print("Validation report:", report)
             print("Executando movimento cartesiano...")
-            self.base.ExecuteAction(self.action)
-            time.sleep(0.5)  # Pequeno atraso para garantir que a ação come
+            self.base.ExecuteWaypointTrajectory(waypoint_list)
+            time.sleep(0.5)
             while self.is_busy:
-                time.sleep(1)
+                time.sleep(0.5)
+            err = self.base.GetTrajectoryErrorReport()
+            print("Trajectory error report:", err)
         except KException as ex:
             error_print(ex)
             return False
