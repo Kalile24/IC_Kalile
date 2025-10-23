@@ -114,7 +114,11 @@ def example_send_joint_speeds(base):
 
 def main():
     
+<<<<<<< HEAD
     import modulos.modulo_conexao
+=======
+    from modulos.modulo_conexao import modulo_conexao
+>>>>>>> fix/metodo_obsoleto
 
     with modulos.modulo_conexao.Conexao.create_tcp_connection() as router:
         device_config = DeviceConfigClient(router)

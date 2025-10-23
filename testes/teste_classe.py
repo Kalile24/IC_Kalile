@@ -1,10 +1,17 @@
 import sys, os
+<<<<<<< HEAD
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from modulos.robo_kinova import KinovaRobot
 from modulos.robo_kinova import vetorCartesiano
+=======
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from modulos.robo_kinova import KinovaRobot
+>>>>>>> fix/metodo_obsoleto
 
+from modulos.robo_kinova import KinovaRobot
+from modulos.robo_kinova import vetorCartesiano
 def main():
     kinova = KinovaRobot()
 

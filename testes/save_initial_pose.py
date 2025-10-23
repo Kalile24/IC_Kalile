@@ -1,12 +1,10 @@
 # save_initial_pose.py
+import sys
+import os
+
 import json
 import time
-
-import sys, os
-
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
-from modulos.robo_kinova import KinovaRobot, Base_pb2
+from robo_kinova import KinovaRobot, Base_pb2
 
 POSE_FILE = "pose_inicial.json"
 

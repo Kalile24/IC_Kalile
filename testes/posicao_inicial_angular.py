@@ -77,9 +77,9 @@ def movimentacao_posicao_inicial(base):
         print("Timeout on action notification wait")
     return finished
 def main():
-    import modulo_conexao
+    import modulos.modulo_conexao
         
-    with modulo_conexao.Conexao.create_tcp_connection() as router:
+    with modulos.modulo_conexao.Conexao.create_tcp_connection() as router:
         
         device_config = DeviceConfigClient(router)
         base = BaseClient(router)
