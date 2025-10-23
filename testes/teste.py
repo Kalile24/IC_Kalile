@@ -14,7 +14,7 @@ def main():
     kinova.subscribe_to_notifications()
 
     kinova.executa_acao_existente("Home")
-    kinova.moveTo(vetorCartesiano(0, 0, 0.3), vetorCartesiano(0, 0, 0), Base_pb2.CARTESIAN_REFERENCE_FRAME_TOOL)
+    kinova.moveTo(vetorCartesiano(0, 0, 0.1), vetorCartesiano(90, 0, 0), Base_pb2.CARTESIAN_REFERENCE_FRAME_TOOL)
 
     kinova.unsubscribe_from_notifications()
     kinova.disconnect()
