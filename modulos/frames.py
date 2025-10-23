@@ -10,9 +10,31 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from modulos.robo_kinova import KinovaRobot
 from modulos.robo_kinova import vetorCartesiano
 
+##MATRIZES DE ROTAÇÃO##
+def rot_x(a): c,s=np.cos(a),np.sin(a); return np.array([[1,0,0],[0,c,-s],[0,s,c]])
+def rot_y(a): c,s=np.cos(a),np.sin(a); return np.array([[c,0,s],[0,1,0],[-s,0,c]])
+def rot_z(a): c,s=np.cos(a),np.sin(a); return np.array([[c,-s,0],[s,c,0],[0,0,1]])
+
+##GERA MATRIZ DE ROTAÇÃO A PARTIR DE EULER XYZ EM GRAUS##
+def euler_xyz_deg_to_R(tx,ty,tz):
+    ax,ay,az = np.deg2rad([tx,ty,tz])
+    return rot_z(az) @ rot_y(ay) @ rot_x(ax)
+
+##CONVERTE MATRIZ DE ROTAÇÃO PARA EULER XYZ EM GRAUS##
+def R_to_euler_xyz_deg(R):
+    sy = -R[2,0]
+    ty = np.arcsin(np.clip(sy, -1.0, 1.0))
+    cy = np.cos(ty)
+    if abs(cy) > 1e-9:
+        tx = np.arctan2(R[2,1]/cy, R[2,2]/cy)
+        tz = np.arctan2(R[1,0]/cy, R[0,0]/cy)
+    else:  ##gimbal lock
+        tz = 0.0
+        tx = np.arctan2(-R[0,1], R[1,1])
+    return np.rad2deg([tx, ty, tz])
+
 
 ##MATRIZES HOMOGÊNEAS PARA CADA FRAME##
-
 #T_I_K -> TRANSFORMACAO DE K PARA I
 T_BASE_1 = np.array([
     [1,0,0,0],
